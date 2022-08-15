@@ -38,7 +38,8 @@ struct WebsiteController: RouteCollection {
             throw Abort(.notFound)
         }
         let user = try await acronym.$user.get(on: req.db)
-        let context = AcronymContext(title: acronym.short, acronym: acronym, user: user)
+        let categories = try await acronym.$categories.query(on: req.db).all()
+        let context = AcronymContext(title: acronym.short, acronym: acronym, user: user, categories: categories)
         return try await req.view.render("acronym", context)
     }
     
@@ -145,6 +146,7 @@ struct AcronymContext: Encodable {
     let title: String
     let acronym: Acronym
     let user: User
+    let categories: [Category]
 }
 
 struct UserContext: Encodable {
