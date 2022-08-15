@@ -19,6 +19,8 @@ struct WebsiteController: RouteCollection {
         
         routes.get("acronyms", "create", use: createAcronymHandler(_:))
         routes.post("acronyms", "create", use: createAcronymPostHandler(_:))
+        routes.get("acronyms", ":acronymID", "edit", use: editAcronymHandler(_:))
+        routes.post("acronyms", ":acronymID", "edit", use: editAcronymPostHandler(_:))
     }
 
     func indexHandler(_ req: Request) async throws -> View {
@@ -85,6 +87,35 @@ struct WebsiteController: RouteCollection {
         }
         return req.redirect(to: "/acronyms/\(id)")
     }
+    
+    func editAcronymHandler(_ req: Request) async throws -> View {
+        let acronymID: UUID? = req.parameters.get("acronymID")
+        guard let acronym = try await Acronym.find(acronymID, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let users = try await User.query(on: req.db).all()
+        let context = EditAcronymContext(acronym: acronym, users: users)
+        return try await req.view.render("createAcronym", context)
+    }
+    
+    func editAcronymPostHandler(_ req: Request) async throws -> Response {
+        let acronymID: UUID? = req.parameters.get("acronymID")
+        guard let acronym = try await Acronym.find(acronymID, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        let acronymDTO = try req.content.decode(CreateAcronymDTO.self)
+        acronym.short = acronymDTO.short
+        acronym.long = acronymDTO.long
+        acronym.$user.id = acronymDTO.userID
+        
+        guard let id = acronym.id else {
+            throw Abort(.internalServerError)
+        }
+        
+        try await acronym.save(on: req.db)
+        return req.redirect(to: "/acronyms/\(id)")
+    }
 }
 
 struct IndexContext: Encodable {
@@ -123,4 +154,11 @@ struct CategoryContext: Encodable {
 struct CreateAcronymContext: Encodable {
     let title = "Create An Acronym"
     let users: [User]
+}
+
+struct EditAcronymContext: Encodable {
+    let title = "Edit Acronym"
+    let acronym: Acronym
+    let users: [User]
+    let editing = true
 }

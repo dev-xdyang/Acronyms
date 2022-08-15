@@ -5,24 +5,38 @@
         <form method="post">
             <div class="mb-3">
                 <label for="short" class="from-label">Acronym</lable>
-                <input type="text" name="short" class="form-control" id="short"/>
+                <input type="text" name="short" class="form-control" id="short" #if(editing): value="#(acronym.short)" #endif"/>
             </div>
             
             <div class="mb-3">
                 <label for="long" class="from-label">Meaning</label>
-                <input type="text" name="long" class="form-control" id="long"/>
+                <input type="text" name="long" class="form-control" id="long" #if(editing): value="#(acronym.long)" #endif/>
             </div>
             
             <div class="mb-3">
                 <lable for="userID"  class="from-label">User: </label>
+                
                 <select name="userID" class="form-select" id="userID">
                     #for(user in users):
-                        <option value="#(user.id)">#(user.name)</option>
+                        <option value="#(user.id)"
+                            #if(editing):
+                                #if(acronym.userID == user.id):
+                                    selected
+                                #endif
+                            #endif>
+                            #(user.name)
+                        </option>
                     #endfor
                 </select>
             </div>
             
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">
+                #if(editing):
+                    Update
+                #else:
+                    Submit
+                #endif
+            </button>
         </form>
     #endexport
 #endextend
