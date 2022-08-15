@@ -21,6 +21,7 @@ struct WebsiteController: RouteCollection {
         routes.post("acronyms", "create", use: createAcronymPostHandler(_:))
         routes.get("acronyms", ":acronymID", "edit", use: editAcronymHandler(_:))
         routes.post("acronyms", ":acronymID", "edit", use: editAcronymPostHandler(_:))
+        routes.post("acronyms", ":acronymID", "delete", use: deleteAcronymHandler(_:))
     }
 
     func indexHandler(_ req: Request) async throws -> View {
@@ -115,6 +116,15 @@ struct WebsiteController: RouteCollection {
         
         try await acronym.save(on: req.db)
         return req.redirect(to: "/acronyms/\(id)")
+    }
+    
+    func deleteAcronymHandler(_ req: Request) async throws -> Response {
+        let acronymID: UUID? = req.parameters.get("acronymID")
+        guard let acronym = try await Acronym.find(acronymID, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        try await acronym.delete(on: req.db)
+        return req.redirect(to: "/")
     }
 }
 
