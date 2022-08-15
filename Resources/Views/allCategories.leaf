@@ -4,7 +4,7 @@
         
         #if(count(categories) > 0):
             <table class="table table-bordered table-hovor">
-                <thead class="thead-light">
+                <thead class="table-light">
                     <tr>
                         <td>Name</td>
                     </tr>
