@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  til-app:
+    image: acronyms:latest
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: testing.Dockerfile
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5434
+      
+  postgres:
+    image: "postgres"
+    environment:
+      POSTGRES_DB: vapor-test
+      POSTGRES_USER: vapor_username
+      POSTGRES_PASSWORD: vapor_password
+    ports:
+      - '5434:5432'
+    

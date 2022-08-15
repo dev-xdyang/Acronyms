@@ -1,0 +1,26 @@
+#extend("base"):
+    #export("body"):
+        <h1>#(title)</h1>
+        
+        #if(count(categories) > 0):
+            <table class="table table-bordered table-hovor">
+                <thead class="thead-light">
+                    <tr>
+                        <td>Name</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    #for(category in categories):
+                        <tr>
+                            <td>
+                                <a href="/categories/#(category.id)">#(category.name)</a>
+                            </td>
+                        </tr>
+                    #endfor
+                </tbody>
+            </table>
+        #else:
+            <h2>There aren't any categories yet!</h2>
+        #endif
+    #endexport
+#endextend
