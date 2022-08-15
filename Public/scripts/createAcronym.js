@@ -18,4 +18,4 @@ $.ajax({
       tokenSeparators: [','],
       data: dataToReturn
     });
-  });
+});

@@ -30,6 +30,13 @@
                 </select>
             </div>
             
+            <div class="mb-3">
+                <label for="categories" class="from-label">Categories</label>
+                
+                <select name="categories[]" class="form-control" id="categories" placeholder="Categories" multiple="multiple">
+                </select>
+            </div>
+            
             <button type="submit" class="btn btn-primary">
                 #if(editing):
                     Update
@@ -37,6 +44,7 @@
                     Submit
                 #endif
             </button>
+
         </form>
     #endexport
 #endextend

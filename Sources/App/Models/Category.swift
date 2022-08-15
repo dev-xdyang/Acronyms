@@ -34,3 +34,15 @@ final class Category: Model, Content {
         self.name = name
     }
 }
+
+extension Category {
+    static func addCategory(name: String, to acronym: Acronym, on req: Request) async throws {
+        if let category = try await Category.query(on: req.db).filter(\.$name == name).first() {
+            try await acronym.$categories.attach(category, on: req.db)
+        } else {
+            let category = Category(name: name)
+            try await category.save(on: req.db)
+            try await acronym.$categories.attach(category, on: req.db)
+        }
+    }
+}

@@ -11,17 +11,19 @@ import Fluent
 struct WebsiteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: indexHandler)
-        routes.get("acronyms", ":acronymID", use: acronymHandler(_:))
-        routes.get("users", ":userID", use: userHandler(_:))
-        routes.get("users", use: allUserHandler(_:))
-        routes.get("categories", use: allCategoriesHandler(_:))
-        routes.get("categories", ":categoryID", use: categoryHandler(_:))
         
+        routes.get("acronyms", ":acronymID", use: acronymHandler(_:))
         routes.get("acronyms", "create", use: createAcronymHandler(_:))
         routes.post("acronyms", "create", use: createAcronymPostHandler(_:))
         routes.get("acronyms", ":acronymID", "edit", use: editAcronymHandler(_:))
         routes.post("acronyms", ":acronymID", "edit", use: editAcronymPostHandler(_:))
         routes.post("acronyms", ":acronymID", "delete", use: deleteAcronymHandler(_:))
+        
+        routes.get("categories", use: allCategoriesHandler(_:))
+        routes.get("categories", ":categoryID", use: categoryHandler(_:))
+        
+        routes.get("users", ":userID", use: userHandler(_:))
+        routes.get("users", use: allUserHandler(_:))
     }
 
     func indexHandler(_ req: Request) async throws -> View {
@@ -80,12 +82,18 @@ struct WebsiteController: RouteCollection {
     }
     
     func createAcronymPostHandler(_ req: Request) async throws -> Response {
-        let acronymDTO = try req.content.decode(CreateAcronymDTO.self)
+        let acronymDTO = try req.content.decode(CreateAcronymData.self)
+        
         let acronym = Acronym(short: acronymDTO.short, long: acronymDTO.long, userID: acronymDTO.userID)
         try await acronym.save(on: req.db)
         guard let id = acronym.id else {
             throw Abort(.internalServerError)
         }
+        
+        for category in acronymDTO.categories ?? [] {
+            try await Category.addCategory(name: category, to: acronym, on: req)
+        }
+        
         return req.redirect(to: "/acronyms/\(id)")
     }
     
@@ -171,4 +179,12 @@ struct EditAcronymContext: Encodable {
     let acronym: Acronym
     let users: [User]
     let editing = true
+}
+
+
+struct CreateAcronymData: Content {
+    let userID: UUID
+    let short: String
+    let long: String
+    let categories: [String]?
 }
