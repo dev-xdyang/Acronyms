@@ -104,7 +104,8 @@ struct WebsiteController: RouteCollection {
             throw Abort(.notFound)
         }
         let users = try await User.query(on: req.db).all()
-        let context = EditAcronymContext(acronym: acronym, users: users)
+        let categories = try await acronym.$categories.query(on: req.db).all()
+        let context = EditAcronymContext(acronym: acronym, users: users, categories: categories)
         return try await req.view.render("createAcronym", context)
     }
     
@@ -114,7 +115,7 @@ struct WebsiteController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let acronymDTO = try req.content.decode(CreateAcronymDTO.self)
+        let acronymDTO = try req.content.decode(CreateAcronymData.self)
         acronym.short = acronymDTO.short
         acronym.long = acronymDTO.long
         acronym.$user.id = acronymDTO.userID
@@ -124,6 +125,22 @@ struct WebsiteController: RouteCollection {
         }
         
         try await acronym.save(on: req.db)
+        
+        let exitCategoties = try await acronym.$categories.query(on: req.db).all()
+        let exitNames = Set(exitCategoties.map(\.name))
+        let newNames = Set(acronymDTO.categories ?? [])
+        let needAddNames = newNames.subtracting(exitNames)
+        let needRemoveNames = exitNames.subtracting(newNames)
+        
+        for name in needAddNames {
+            try await Category.addCategory(name: name, to: acronym, on: req)
+        }
+        for name in needRemoveNames {
+            if let category = try? await Category.query(on: req.db).filter(\.$name == name).first() {
+                try await acronym.$categories.detach(category, on: req.db)
+            }
+        }
+        
         return req.redirect(to: "/acronyms/\(id)")
     }
     
@@ -180,6 +197,7 @@ struct EditAcronymContext: Encodable {
     let title = "Edit Acronym"
     let acronym: Acronym
     let users: [User]
+    let categories: [Category]
     let editing = true
 }
 
