@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import Crypto
 
 struct UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -19,22 +20,23 @@ struct UserController: RouteCollection {
         userGroup.post(use: createHandler)
     }
     
-    func getAllHandler(_ req: Request) async throws -> [User] {
-        try await User.query(on: req.db).all()
+    func getAllHandler(_ req: Request) async throws -> [User.Public] {
+        try await User.query(on: req.db).all().map(\.publicView)
     }
     
-    func getHandler(_ req: Request) async throws -> User {
+    func getHandler(_ req: Request) async throws -> User.Public {
         let id: UUID? = req.parameters.get("id")
         guard let user = try await User.find(id, on: req.db) else {
             throw Abort(.notFound)
         }
-        return user
+        return user.publicView
     }
     
-    func createHandler(_ req: Request) async throws -> User {
+    func createHandler(_ req: Request) async throws -> User.Public {
         let user = try req.content.decode(User.self)
+        user.password = try Bcrypt.hash(user.password)
         try await user.save(on: req.db)
-        return user
+        return user.publicView
     }
     
     func getAcronymsHandler(_ req: Request) async throws -> [Acronym] {

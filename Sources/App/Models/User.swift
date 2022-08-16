@@ -13,6 +13,7 @@ extension User {
         static let id = "id"
         static let name = "name"
         static let username = "username"
+        static let password = "password"
     }
 }
 
@@ -31,11 +32,33 @@ final class User: Model, Content {
     @Children(for: \.$user)
     var acronyms: [Acronym]
     
+    @Field(Key.password)
+    var password: String
+    
     init() {}
     
-    init(id: UUID? = nil, name: String, username: String) {
+    init(id: UUID? = nil, name: String, username: String, password: String) {
         self.id = id
         self.name = name
         self.username = username
+        self.password = password
+    }
+}
+
+extension User {
+    final class Public: Codable, Content {
+        var id: UUID?
+        var name: String
+        var username: String
+        
+        init(id: UUID?, name: String, username: String) {
+            self.id = id
+            self.name = name
+            self.username = username
+        }
+    }
+    
+    var publicView: Public {
+        Public(id: id, name: name, username: username)
     }
 }

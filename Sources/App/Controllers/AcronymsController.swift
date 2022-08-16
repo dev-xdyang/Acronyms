@@ -54,13 +54,13 @@ struct AcronymsController: RouteCollection {
             .all()
     }
     
-    func getUserHandler(_ req: Request) async throws -> User {
+    func getUserHandler(_ req: Request) async throws -> User.Public {
         let id: UUID? = req.parameters.get("acronymID")
         guard let acronym = try await Acronym.find(id, on: req.db) else {
             throw Abort(.notFound)
         }
         
-        return try await acronym.$user.get(on: req.db)
+        return try await acronym.$user.get(on: req.db).publicView
     }
     
     func searchHandler(_ req: Request) async throws -> [Acronym] {

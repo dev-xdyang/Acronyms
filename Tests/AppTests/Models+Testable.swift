@@ -9,8 +9,8 @@
 import Fluent
 
 extension User {
-    static func create(name: String = "Luke", username: String = "lukes", on database: Database) throws -> User {
-        let user = User(name: name, username: username)
+    static func create(name: String = "Luke", username: String = "lukes", password: String = "password", on database: Database) throws -> User {
+        let user = User(name: name, username: username, password: password)
         try user.save(on: database).wait()
         return user
     }
