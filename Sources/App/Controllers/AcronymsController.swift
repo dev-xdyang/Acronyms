@@ -19,15 +19,20 @@ struct AcronymsController: RouteCollection {
         acronymsGroup.get(":acronymID", "user", use: getUserHandler(_:))
         acronymsGroup.get("search", use: searchHandler(_:))
         
-        acronymsGroup.post(use: createHandler(_:))
-        acronymsGroup.put(":acronymID", use: updateHandler(_:))
-        
-        acronymsGroup.delete(":acronymID", use: deleteHandler(_:))
-        
-        
         acronymsGroup.get(":acronymID", "categories", use: getCategoriesHandler(_:))
-        acronymsGroup.post(":acronymID", "categories", ":categoryID", use: addCategoriesHandler(_:))
-        acronymsGroup.delete(":acronymID", "categories", ":categoryID", use: removeCategories(_:))
+        
+        //: Basic auth
+        let basicAuthMiddleware = User.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let basicAuthGroup = acronymsGroup.grouped(basicAuthMiddleware, guardAuthMiddleware)
+        
+        basicAuthGroup.post(use: createHandler(_:))
+        basicAuthGroup.put(":acronymID", use: updateHandler(_:))
+        
+        basicAuthGroup.delete(":acronymID", use: deleteHandler(_:))
+        
+        basicAuthGroup.post(":acronymID", "categories", ":categoryID", use: addCategoriesHandler(_:))
+        basicAuthGroup.delete(":acronymID", "categories", ":categoryID", use: removeCategories(_:))
     }
     
     func getAllHandler(_ req: Request) async throws -> [Acronym] {

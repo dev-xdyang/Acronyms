@@ -62,3 +62,12 @@ extension User {
         Public(id: id, name: name, username: username)
     }
 }
+
+extension User: ModelAuthenticatable {
+    static var usernameKey = \User.$username
+    static var passwordHashKey  = \User.$password
+    
+    func verify(password: String) throws -> Bool {
+        try Bcrypt.verify(password, created: self.password)
+    }
+}
