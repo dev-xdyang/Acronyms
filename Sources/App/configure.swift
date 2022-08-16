@@ -38,7 +38,10 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateAcronym())
     app.migrations.add(CreateCategory())
     app.migrations.add(CreateAcronymCategoryPivot())
+    app.migrations.add(CreateToken())
+    app.migrations.add(CreateAdminUser())
     
+//    try app.autoRevert().wait() // uncomment to revert all database data
     try app.autoMigrate().wait()
     
     

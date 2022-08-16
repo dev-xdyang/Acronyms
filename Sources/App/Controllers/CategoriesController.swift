@@ -14,9 +14,15 @@ struct CategoriesController: RouteCollection {
         
         categoriesGroup.get(use: getAll(_:))
         categoriesGroup.get(":categoryID", use: get(_:))
-        categoriesGroup.post(use: create(_:))
         
         categoriesGroup.get(":categoryID", "acronyms", use: getAcronyms(_:))
+        
+        //: Toke auth
+        let tokenAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let authGroup = categoriesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        
+        authGroup.post(use: create(_:))
     }
     
     func getAll(_ req: Request) async throws -> [Category] {

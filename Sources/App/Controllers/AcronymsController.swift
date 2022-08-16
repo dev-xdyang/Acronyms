@@ -21,18 +21,25 @@ struct AcronymsController: RouteCollection {
         
         acronymsGroup.get(":acronymID", "categories", use: getCategoriesHandler(_:))
         
+        /*
         //: Basic auth
         let basicAuthMiddleware = User.authenticator()
         let guardAuthMiddleware = User.guardMiddleware()
-        let basicAuthGroup = acronymsGroup.grouped(basicAuthMiddleware, guardAuthMiddleware)
+        let authGroup = acronymsGroup.grouped(basicAuthMiddleware, guardAuthMiddleware)
+         */
         
-        basicAuthGroup.post(use: createHandler(_:))
-        basicAuthGroup.put(":acronymID", use: updateHandler(_:))
+        //: Token auth
+        let tokeAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let authGroup = acronymsGroup.grouped(tokeAuthMiddleware, guardAuthMiddleware)
         
-        basicAuthGroup.delete(":acronymID", use: deleteHandler(_:))
+        authGroup.post(use: createHandler(_:))
+        authGroup.put(":acronymID", use: updateHandler(_:))
         
-        basicAuthGroup.post(":acronymID", "categories", ":categoryID", use: addCategoriesHandler(_:))
-        basicAuthGroup.delete(":acronymID", "categories", ":categoryID", use: removeCategories(_:))
+        authGroup.delete(":acronymID", use: deleteHandler(_:))
+        
+        authGroup.post(":acronymID", "categories", ":categoryID", use: addCategoriesHandler(_:))
+        authGroup.delete(":acronymID", "categories", ":categoryID", use: removeCategories(_:))
     }
     
     func getAllHandler(_ req: Request) async throws -> [Acronym] {
@@ -83,15 +90,17 @@ struct AcronymsController: RouteCollection {
     }
     
     func createHandler(_ req: Request) async throws -> Acronym {
+        let user: User = try req.auth.require()
         let acronymDTO = try req.content.decode(CreateAcronymDTO.self)
-        let acronym = Acronym(short: acronymDTO.short,
+        let acronym = try Acronym(short: acronymDTO.short,
                               long: acronymDTO.long,
-                              userID: acronymDTO.userID)
+                              userID: user.requireID())
         try await acronym.save(on: req.db)
         return acronym
     }
     
     func updateHandler(_ req: Request) async throws -> Acronym {
+        let user: User = try req.auth.require()
         let acronymDTO = try req.content.decode(CreateAcronymDTO.self)
         
         let id: UUID? = req.parameters.get("acronymID")
@@ -101,7 +110,7 @@ struct AcronymsController: RouteCollection {
         
         old.short = acronymDTO.short
         old.long = acronymDTO.long
-        old.$user.id = acronymDTO.userID
+        old.$user.id = try user.requireID()
         
         try await old.save(on: req.db)
         
@@ -165,5 +174,4 @@ extension AcronymsController {
 struct CreateAcronymDTO: Content {
     let short: String
     let long: String
-    let userID: UUID
 }

@@ -17,7 +17,15 @@ struct UserController: RouteCollection {
         userGroup.get(":id", use: getHandler(_:))
         userGroup.get(":id", "acronyms", use: getAcronymsHandler)
         
-        userGroup.post(use: createHandler)
+        let basicAuthMiddleware = User.authenticator()
+        let basicAuthGroup = userGroup.grouped(basicAuthMiddleware)
+        basicAuthGroup.post("login", use: loginHandler(_:))
+        
+        let tokenAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let tokeAuthGroup = userGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        
+        tokeAuthGroup.post(use: createHandler)
     }
     
     func getAllHandler(_ req: Request) async throws -> [User.Public] {
@@ -45,5 +53,12 @@ struct UserController: RouteCollection {
             throw Abort(.notFound)
         }
         return try await user.$acronyms.get(on: req.db)
+    }
+    
+    func loginHandler(_ req: Request) async throws -> Token {
+        let user = try req.auth.require(User.self)
+        let token = try Token.generate(for: user)
+        try await token.save(on: req.db)
+        return token
     }
 }
