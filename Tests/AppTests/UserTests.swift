@@ -13,15 +13,15 @@ final class UserTests: XCTestCase {
     let userUsername = "alicea"
     let userPassword = "password"
     let usersURI = "/api/users/"
+    
     var app: Application!
     
-    override func setUp() async throws {
+    override func setUpWithError() throws {
         app = try Application.testable()
     }
     
-    override func tearDown() async throws {
+    override func tearDownWithError() throws {
         app.shutdown()
-        app = nil
     }
     
     func testUsersCanBeRetrievedFromAPI() throws {
@@ -31,7 +31,7 @@ final class UserTests: XCTestCase {
         try app.test(.GET, "api/users", afterResponse: { response in
             XCTAssertEqual(response.status, .ok)
             
-            let users = try response.content.decode([User].self)
+            let users = try response.content.decode([User.Public].self)
             XCTAssertEqual(users.count, 2)
             XCTAssertEqual(users[0].name, userName)
             XCTAssertEqual(users[0].username, userUsername)
@@ -42,22 +42,22 @@ final class UserTests: XCTestCase {
     func testUserCanBeSavedWithAPI() throws {
         let user = User(name: userName, username: userUsername, password: userPassword)
         
-        try app.test(.POST, usersURI, beforeRequest: { req in
+        try app.test(.POST, usersURI, loggedInRequest: true, beforeRequest: { req in
             try req.content.encode(user)
         }, afterResponse: { response in
-            let receivedUser = try response.content.decode(User.self)
+            let receivedUser = try response.content.decode(User.Public.self)
             
             XCTAssertEqual(receivedUser.name, user.name)
             XCTAssertEqual(receivedUser.username, user.username)
             XCTAssertNotNil(receivedUser.id)
             
             try app.test(.GET, usersURI, afterResponse: { secondResponse in
-                let users = try secondResponse.content.decode([User].self)
+                let users = try secondResponse.content.decode([User.Public].self)
                 
-                XCTAssertEqual(users.count, 1)
-                XCTAssertEqual(users[0].name, userName)
-                XCTAssertEqual(users[0].username, userUsername)
-                XCTAssertEqual(users[0].id, receivedUser.id)
+                XCTAssertEqual(users.count, 2)
+                XCTAssertEqual(users[1].name, userName)
+                XCTAssertEqual(users[1].username, userUsername)
+                XCTAssertEqual(users[1].id, receivedUser.id)
             })
         })
     }

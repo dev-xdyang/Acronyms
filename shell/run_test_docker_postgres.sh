@@ -1,3 +1,6 @@
+docker stop postgres-test
+docker rm postgres-test
+
 docker run --name postgres-test \
     -e POSTGRES_DB=vapor-test \
     -e POSTGRES_USER=vapor_username \

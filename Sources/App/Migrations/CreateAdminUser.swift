@@ -8,7 +8,7 @@
 import Vapor
 import Fluent
 
-fileprivate struct AdminUser {
+struct AdminUser {
     static let name = "Admin"
     static let username = "admin"
     static let password = "password"
